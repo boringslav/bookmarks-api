@@ -8,8 +8,23 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 export class AuthService {
   constructor(private repository: RepositoryService) {}
 
-  signIn() {
-    return 'I am singing in...';
+  async signIn(dto: AuthDTO) {
+    const { email, password } = dto;
+    const user = await this.repository.user.findUnique({
+      where: {
+        //TODO: Fix TS2322 Type {email:string} is not assignable to type UserWhereUniqueInput
+        email,
+      },
+    });
+
+    if (!user) throw new ForbiddenException('Invalid credentials!');
+
+    const isValidPassword = await bcrypt.compare(password, user.hash);
+
+    if (!isValidPassword) throw new ForbiddenException('Invalid credentials!');
+
+    delete user.hash;
+    return user;
   }
 
   async signUp(dto: AuthDTO) {
