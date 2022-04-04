@@ -12,7 +12,6 @@ export class AuthService {
     const { email, password } = dto;
     const user = await this.repository.user.findUnique({
       where: {
-        //TODO: Fix TS2322 Type {email:string} is not assignable to type UserWhereUniqueInput
         email,
       },
     });
