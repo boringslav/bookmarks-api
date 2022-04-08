@@ -3,10 +3,16 @@ import * as bcrypt from 'bcrypt';
 import { RepositoryService } from '../repository/repository.service';
 import { AuthDTO } from './dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  constructor(private repository: RepositoryService) {}
+  constructor(
+    private repository: RepositoryService,
+    private jwt: JwtService,
+    private config: ConfigService,
+  ) {}
 
   async signIn(dto: AuthDTO) {
     const { email, password } = dto;
@@ -61,5 +67,19 @@ export class AuthService {
       }
       throw err;
     }
+  }
+
+  async signToken(userId: number, email: string): Promise<string> {
+    const payload = {
+      sub: userId,
+      email,
+    };
+
+    const secret = this.config.get('JWT_SECRET');
+
+    return this.jwt.signAsync(payload, {
+      expiresIn: '15m',
+      secret,
+    });
   }
 }
