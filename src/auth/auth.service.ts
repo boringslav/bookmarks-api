@@ -28,8 +28,7 @@ export class AuthService {
 
     if (!isValidPassword) throw new ForbiddenException('Invalid credentials!');
 
-    delete user.hash;
-    return user;
+    return this.signToken(user.id, user.email);
   }
 
   async signUp(dto: AuthDTO) {
@@ -55,7 +54,7 @@ export class AuthService {
         },
       });
 
-      return user;
+      return this.signToken(user.id, user.email);
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         /**
@@ -69,17 +68,22 @@ export class AuthService {
     }
   }
 
-  async signToken(userId: number, email: string): Promise<string> {
+  async signToken(
+    userId: number,
+    email: string,
+  ): Promise<{ access_token: string }> {
     const payload = {
       sub: userId,
       email,
     };
 
     const secret = this.config.get('JWT_SECRET');
-
-    return this.jwt.signAsync(payload, {
+    const token = await this.jwt.signAsync(payload, {
       expiresIn: '15m',
       secret,
     });
+    return {
+      access_token: token,
+    };
   }
 }
